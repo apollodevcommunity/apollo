@@ -38,7 +38,8 @@ enum class ProcessStage {
   ULTRASONIC_DETECTION = 7,
   SENSOR_FUSION = 8,
   UNKNOWN_STAGE = 9,
-  PROCESSSTAGE_COUNT = 10
+  PROCESSSTAGE_COUNT = 10,
+  LIDAR_DETECTION = 11
 };
 
 class Descriptor {
@@ -58,6 +59,7 @@ class SensorFrameMessage {
 
   std::string sensor_id_;
   double timestamp_ = 0.0;
+  uint64_t lidar_timestamp_ = 0;
   uint32_t seq_num_ = 0;
   std::string type_name_;
   base::HdmapStructConstPtr hdmap_;

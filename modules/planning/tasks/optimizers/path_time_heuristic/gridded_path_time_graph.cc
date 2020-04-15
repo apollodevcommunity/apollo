@@ -23,7 +23,6 @@
 #include <algorithm>
 #include <limits>
 #include <string>
-#include <utility>
 
 #include "cyber/task/task.h"
 
@@ -50,6 +49,9 @@ static constexpr double kDoubleEpsilon = 1.0e-6;
 // dynamics
 bool CheckOverlapOnDpStGraph(const std::vector<const STBoundary*>& boundaries,
                              const StGraphPoint& p1, const StGraphPoint& p2) {
+  if (FLAGS_use_st_drivable_boundary) {
+    return false;
+  }
   for (const auto* boundary : boundaries) {
     if (boundary->boundary_type() == STBoundary::BoundaryType::KEEP_CLEAR) {
       continue;
@@ -381,13 +383,12 @@ void GriddedPathTimeGraph::CalculateCostAt(
         std::distance(spatial_distance_by_index_.begin(), pre_lowest_itr));
   }
   const uint32_t r_pre_size = r - r_low + 1;
-  uint32_t r_pre = r;
   const auto& pre_col = cost_table_[c - 1];
   double curr_speed_limit = speed_limit;
 
   if (c == 2) {
     for (uint32_t i = 0; i < r_pre_size; ++i) {
-      r_pre = r - i;
+      uint32_t r_pre = r - i;
       if (std::isinf(pre_col[r_pre].total_cost()) ||
           pre_col[r_pre].pre_point() == nullptr) {
         continue;
@@ -438,7 +439,7 @@ void GriddedPathTimeGraph::CalculateCostAt(
   }
 
   for (uint32_t i = 0; i < r_pre_size; ++i) {
-    r_pre = r - i;
+    uint32_t r_pre = r - i;
     if (std::isinf(pre_col[r_pre].total_cost()) ||
         pre_col[r_pre].pre_point() == nullptr) {
       continue;

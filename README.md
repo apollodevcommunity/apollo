@@ -1,6 +1,6 @@
 ![image alt text](docs/demo_guide/images/Apollo_logo.png)
 
-[![Build Status](http://180.76.142.62:8111/app/rest/builds/buildType:ApolloPublic_Build/statusIcon)](http://180.76.142.62:8111/viewType.html?buildTypeId=ApolloPublic_Build&guest=1)
+[![Build Status](http://180.76.142.62:8111/app/rest/builds/buildType:Apollo_Build/statusIcon)](http://180.76.142.62:8111/viewType.html?buildTypeId=Apollo_Build&guest=1)
 [![Simulation Status](https://azure.apollo.auto/dailybuildstatus.svg)](https://azure.apollo.auto/daily-build/public)
 
 ```
@@ -31,13 +31,14 @@ For business and partnership, please visit [our website](http://apollo.auto).
 
 ## Getting Started
 
-Apollo 5.0 is loaded with new modules and features but needs to be calibrated and configured perfectly before you take it for a spin. Please review the prerequisites and installation steps in detail to ensure that you are well equipped to build and launch Apollo. You could also check out Apollo's architecture overview for a greater understanding of Apollo's core technology and platform.
+Apollo 5.5 is loaded with new modules and features but needs to be calibrated and configured perfectly before you take it for a spin. Please review the prerequisites and installation steps in detail to ensure that you are well equipped to build and launch Apollo. You could also check out Apollo's architecture overview for a greater understanding of Apollo's core technology and platform.
 
 **[Attention]** The Apollo team is proud to announce that the platform has been migrated to Ubuntu 18.04, one of the most requested upgrades from our developers. We do not expect a disruption to your current work with the Apollo platform, but for perception related code, you would need to:
 
 1. Upgrade host to ubuntu_16.04 and above (Ubuntu 18.04 is preferred)
 2. Update local host NVIDIA driver >=410.48. [Website link](https://www.nvidia.com/Download/index.aspx?lang=en-us). Or follow the [guide](https://github.com/ApolloAuto/apollo-kernel/tree/master/linux/Install_nvidia_driver_on_ubuntu_18.04.md) to install Apollo-Kernel and NVIDIA driver, if you want to install Apollo-Kernel.
-3. Install NVIDIA-docker 2.0 - you can refer to [this link](https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0)) for steps on installation, or use the install scripts we provide [here](https://github.com/ApolloAuto/apollo/blob/master/docker/setup_host/install_nvidia_docker.sh)  
+3. Install latest Docker-CE (19.03+) by following the [official doc](https://docs.docker.com/install/linux/docker-ce/ubuntu).
+4. Install latest nvidia-container-toolkit by following the [official doc](https://github.com/NVIDIA/nvidia-docker).
 
 For those developers that would like to continue working with Ubuntu 14.04, please use the [Ubuntu 14.04 branch](https://github.com/ApolloAuto/apollo/tree/ubuntu_14.04) instead of the master branch.
 
@@ -54,13 +55,13 @@ For those developers that would like to continue working with Ubuntu 14.04, plea
 
 * A machine with a 4-core processor and 8GB memory minimum (16GB for Apollo 3.5 and above)
 
-* Ubuntu 14.04
+* Ubuntu 18.04
 
 * Working knowledge of Docker
 
 
  - Please note, it is recommended that you install the versions of Apollo in the following order:
- **1.0 > whichever version you would like to test out**.
+ **1.0 -> whichever version you would like to test out**.
  The reason behind this recommendation is that you need to confirm whether individual hardware components
  and modules are functioning correctly and clear various version test cases,
  before progressing to a higher, more capable version for your safety and the safety of those around you.
@@ -69,7 +70,7 @@ For those developers that would like to continue working with Ubuntu 14.04, plea
 
 The following diagram highlights the scope and features of each Apollo release:
 
-![](docs/demo_guide/images/Apollo_Roadmap.png)
+![](docs/demo_guide/images/Apollo_Roadmap_5.5.png)
 
 [**Apollo 1.0:**](docs/quickstart/apollo_1_0_hardware_system_installation_guide.md)
 
@@ -235,6 +236,27 @@ The car now has 360-degree visibility, along with upgraded perception deep learn
     * Simulation
     * [Apollo Synthetic Data Set](http://apollo.auto/synthetic.html)
 
+[**Apollo 5.5:**](docs/quickstart/apollo_5_5_quick_start.md)
+
+Apollo 5.5 enhances the complex urban road autonomous driving capabilities of previous Apollo releases, by introducing curb-to-curb driving support. With this new addition, Apollo is now a leap closer to fully autonomous urban road driving.
+The car has complete 360-degree visibility, along with upgraded perception deep learning model and a brand new prediction model to handle the changing conditions of complex road and junction scenarios, making the car more secure and aware. 
+
+![](docs/demo_guide/images/Apollo_5_5_Architecture.png)
+
+**For Setup:**
+
+* Hardware:
+
+    * Same as Apollo 5.0
+
+* Software:
+
+    * [Data Pipeline](https://github.com/ApolloAuto/apollo/tree/master/modules/tools/fuel_proxy)
+    * Perception
+    * Planning
+    * Control
+    * Prediction
+    * Simulation
 
 ## Architecture
 
@@ -275,6 +297,8 @@ Congratulations! You have successfully built out Apollo without Hardware. If you
 * [Apollo 3.5 QuickStart Guide](docs/quickstart/apollo_3_5_quick_start.md)
 
 * [Apollo 5.0 QuickStart Guide](docs/quickstart/apollo_5_0_quick_start.md)
+
+* [Apollo 5.5 QuickStart Guide](docs/quickstart/apollo_5_5_quick_start.md)
 
 ## Documents
 

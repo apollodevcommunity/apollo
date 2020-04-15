@@ -20,8 +20,6 @@
 
 #include "modules/planning/scenarios/lane_follow/lane_follow_stage.h"
 
-#include <algorithm>
-#include <limits>
 #include <utility>
 
 #include "cyber/common/log.h"
@@ -303,26 +301,8 @@ void LaneFollowStage::PlanFallbackTrajectory(
   }
 
   AERROR << "Speed fallback due to algorithm failure";
-  // TODO(Hongyi): refine the fall-back handling here.
-  // To use piecewise jerk speed fallback, stop distance here
-  // is an upper bound of s, not a target.
-  // TODO(Jiacheng): move this stop_path_threshold to a gflag
-  const double path_stop_distance =
-      reference_line_info->path_data().discretized_path().Length();
-
-  const double obstacle_stop_distance =
-      reference_line_info->st_graph_data().is_initialized()
-          ? reference_line_info->st_graph_data().min_s_on_st_boundaries()
-          : std::numeric_limits<double>::infinity();
-
-  const double curr_speed_distance =
-      FLAGS_fallback_total_time *
-      std::min({reference_line_info->GetCruiseSpeed(),
-                reference_line_info->vehicle_state().linear_velocity()});
-
   *reference_line_info->mutable_speed_data() =
-      SpeedProfileGenerator::GenerateFallbackSpeed(std::min(
-          {path_stop_distance, obstacle_stop_distance, curr_speed_distance}));
+      SpeedProfileGenerator::GenerateFallbackSpeed();
 
   if (reference_line_info->trajectory_type() != ADCTrajectory::PATH_FALLBACK) {
     reference_line_info->AddCost(kSpeedOptimizationFallbackCost);
@@ -341,7 +321,7 @@ void LaneFollowStage::GenerateFallbackPathProfile(
   const auto adc_point_y = adc_point.path_point().y();
 
   common::SLPoint adc_point_s_l;
-  if (!reference_line.XYToSL({adc_point_x, adc_point_y}, &adc_point_s_l)) {
+  if (!reference_line.XYToSL(adc_point.path_point(), &adc_point_s_l)) {
     AERROR << "Fail to project ADC to reference line when calculating path "
               "fallback. Straight forward path is generated";
     const auto adc_point_heading = adc_point.path_point().theta();
@@ -412,9 +392,7 @@ bool LaneFollowStage::RetrieveLastFramePathProfile(
 SLPoint LaneFollowStage::GetStopSL(const ObjectStop& stop_decision,
                                    const ReferenceLine& reference_line) const {
   SLPoint sl_point;
-  reference_line.XYToSL(
-      {stop_decision.stop_point().x(), stop_decision.stop_point().y()},
-      &sl_point);
+  reference_line.XYToSL(stop_decision.stop_point(), &sl_point);
   return sl_point;
 }
 

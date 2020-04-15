@@ -23,6 +23,7 @@
 #include <string>
 
 #include "modules/common/adapters/adapter_gflags.h"
+#include "modules/common/latency_recorder/latency_recorder.h"
 #include "modules/common/time/time.h"
 #include "modules/common/vehicle_state/vehicle_state_provider.h"
 #include "modules/control/common/control_gflags.h"
@@ -48,25 +49,27 @@ std::string PreprocessorSubmodule::Name() const {
 }
 
 bool PreprocessorSubmodule::Init() {
-  if (!cyber::common::GetProtoFromFile(FLAGS_control_common_conf_file,
-                                       &control_common_conf_)) {
-    AERROR << "Unable to load control common conf file: "
-           << FLAGS_control_common_conf_file;
-    return false;
-  }
+  ACHECK(cyber::common::GetProtoFromFile(FLAGS_control_common_conf_file,
+                                         &control_common_conf_))
+      << "Unable to load control common conf file: "
+      << FLAGS_control_common_conf_file;
 
   // Preprocessor writer
   preprocessor_writer_ =
       node_->CreateWriter<Preprocessor>(FLAGS_control_preprocessor_topic);
 
-  CHECK(preprocessor_writer_ != nullptr);
-
+  ACHECK(preprocessor_writer_ != nullptr);
   return true;
 }
 
 bool PreprocessorSubmodule::Proc(const std::shared_ptr<LocalView> &local_view) {
   ADEBUG << "Preprocessor started ....";
+  const auto start_time = Clock::Now();
+
   Preprocessor control_preprocessor;
+  // handling estop
+  auto *preprocessor_status =
+      control_preprocessor.mutable_header()->mutable_status();
 
   control_preprocessor.mutable_local_view()->CopyFrom(*local_view);
 
@@ -74,17 +77,39 @@ bool PreprocessorSubmodule::Proc(const std::shared_ptr<LocalView> &local_view) {
   AERROR_IF(!status.ok()) << "Failed to produce control preprocessor:"
                           << status.error_message();
 
+  if (status.ok() && !estop_) {
+    preprocessor_status->set_error_code(ErrorCode::OK);
+  } else {
+    estop_ = true;
+    preprocessor_status->set_error_code(status.code());
+    preprocessor_status->set_msg(status.error_message());
+  }
+
   if (control_preprocessor.local_view().has_pad_msg()) {
-    auto pad_message = control_preprocessor.local_view().pad_msg();
+    const auto &pad_message = control_preprocessor.local_view().pad_msg();
     if (pad_message.action() == DrivingAction::RESET) {
       AINFO << "Control received RESET action!";
       estop_ = false;
-      estop_reason_.clear();
+      preprocessor_status->set_error_code(ErrorCode::OK);
+      preprocessor_status->set_msg("");
     }
     control_preprocessor.set_received_pad_msg(true);
   }
 
+  control_preprocessor.mutable_header()->set_lidar_timestamp(
+      local_view->header().lidar_timestamp());
+  control_preprocessor.mutable_header()->set_camera_timestamp(
+      local_view->trajectory().header().camera_timestamp());
+  control_preprocessor.mutable_header()->set_radar_timestamp(
+      local_view->trajectory().header().radar_timestamp());
   common::util::FillHeader(Name(), &control_preprocessor);
+
+  const auto end_time = Clock::Now();
+
+  static apollo::common::LatencyRecorder latency_recorder(
+      FLAGS_control_preprocessor_topic);
+  latency_recorder.AppendLatencyRecord(
+      control_preprocessor.header().lidar_timestamp(), start_time, end_time);
 
   preprocessor_writer_->Write(control_preprocessor);
   ADEBUG << "Preprocessor finished.";
@@ -105,28 +130,27 @@ Status PreprocessorSubmodule::ProducePreprocessorStatus(
     mutable_engage_advice->set_advice(
         apollo::common::EngageAdvice::DISALLOW_ENGAGE);
     mutable_engage_advice->set_reason(status.error_message());
-    estop_ = true;
-    estop_reason_ = status.error_message();
-  } else {
-    Status status_ts = CheckTimestamp(control_preprocessor->local_view());
-
-    if (!status_ts.ok()) {
-      AERROR << "Input messages timeout";
-      status = status_ts;
-      if (control_preprocessor->local_view().chassis().driving_mode() !=
-          apollo::canbus::Chassis::COMPLETE_AUTO_DRIVE) {
-        control_preprocessor->mutable_engage_advice()->set_advice(
-            apollo::common::EngageAdvice::DISALLOW_ENGAGE);
-        control_preprocessor->mutable_engage_advice()->set_reason(
-            status.error_message());
-      }
-    } else {
-      control_preprocessor->mutable_engage_advice()->set_advice(
-          apollo::common::EngageAdvice::READY_TO_ENGAGE);
-    }
+    // skip checking time stamp when failed input check
+    return status;
   }
 
-  // check estop
+  Status status_ts = CheckTimestamp(control_preprocessor->local_view());
+
+  if (!status_ts.ok()) {
+    AERROR << "Input messages timeout";
+    status = status_ts;
+    if (control_preprocessor->local_view().chassis().driving_mode() !=
+        apollo::canbus::Chassis::COMPLETE_AUTO_DRIVE) {
+      control_preprocessor->mutable_engage_advice()->set_advice(
+          apollo::common::EngageAdvice::DISALLOW_ENGAGE);
+      control_preprocessor->mutable_engage_advice()->set_reason(
+          status.error_message());
+    }
+    return status;
+  }
+  control_preprocessor->mutable_engage_advice()->set_advice(
+      apollo::common::EngageAdvice::READY_TO_ENGAGE);
+
   estop_ =
       control_common_conf_.enable_persistent_estop()
           ? estop_ || control_preprocessor->local_view()
@@ -136,24 +160,11 @@ Status PreprocessorSubmodule::ProducePreprocessorStatus(
           : control_preprocessor->local_view().trajectory().estop().is_estop();
 
   if (control_preprocessor->local_view().trajectory().estop().is_estop()) {
-    estop_ = true;
-    estop_reason_ = absl::StrCat(
-        "estop from planning : ",
-        control_preprocessor->local_view().trajectory().estop().reason());
-  }
-
-  if (control_preprocessor->local_view()
-          .trajectory()
-          .trajectory_point()
-          .empty()) {
-    AWARN_EVERY(100) << "planning has no trajectory point. ";
-    estop_ = true;
-    estop_reason_ =
-        absl::StrCat("estop for empty planning trajectory, planning headers: ",
-                     control_preprocessor->local_view()
-                         .trajectory()
-                         .header()
-                         .ShortDebugString());
+    return Status(
+        ErrorCode::CONTROL_ESTOP_ERROR,
+        absl::StrCat(
+            "estop from planning : ",
+            control_preprocessor->local_view().trajectory().estop().reason()));
   }
 
   if (FLAGS_enable_gear_drive_negative_speed_protection) {
@@ -163,32 +174,33 @@ Status PreprocessorSubmodule::ProducePreprocessorStatus(
     if (control_preprocessor->local_view().chassis().gear_location() ==
             Chassis::GEAR_DRIVE &&
         first_trajectory_point.v() < -1 * kEpsilon) {
-      estop_ = true;
-      estop_reason_ = "estop for negative speed when gear_drive";
+      return Status(
+          ErrorCode::CONTROL_ESTOP_ERROR,
+          absl::StrCat(
+              "estop for empty planning trajectory, planning headers: ",
+              control_preprocessor->local_view()
+                  .trajectory()
+                  .header()
+                  .ShortDebugString()));
     }
   }
 
-  if (!estop_) {
-    auto debug = control_preprocessor->mutable_input_debug();
-    debug->mutable_localization_header()->CopyFrom(
-        control_preprocessor->local_view().localization().header());
-    debug->mutable_canbus_header()->CopyFrom(
-        control_preprocessor->local_view().chassis().header());
-    debug->mutable_trajectory_header()->CopyFrom(
+  auto input_debug = control_preprocessor->mutable_input_debug();
+  input_debug->mutable_localization_header()->CopyFrom(
+      control_preprocessor->local_view().localization().header());
+  input_debug->mutable_canbus_header()->CopyFrom(
+      control_preprocessor->local_view().chassis().header());
+  input_debug->mutable_trajectory_header()->CopyFrom(
+      control_preprocessor->local_view().trajectory().header());
+
+  if (control_preprocessor->local_view().trajectory().is_replan()) {
+    latest_replan_trajectory_header_.CopyFrom(
         control_preprocessor->local_view().trajectory().header());
+  }
 
-    if (control_preprocessor->local_view().trajectory().is_replan()) {
-      latest_replan_trajectory_header_.CopyFrom(
-          control_preprocessor->local_view().trajectory().header());
-    }
-
-    if (latest_replan_trajectory_header_.has_sequence_num()) {
-      debug->mutable_latest_replan_trajectory_header()->CopyFrom(
-          latest_replan_trajectory_header_);
-    }
-  } else {
-    control_preprocessor->set_estop(estop_);
-    control_preprocessor->set_estop_reason(estop_reason_);
+  if (latest_replan_trajectory_header_.has_sequence_num()) {
+    input_debug->mutable_latest_replan_trajectory_header()->CopyFrom(
+        latest_replan_trajectory_header_);
   }
 
   return status;

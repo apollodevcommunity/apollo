@@ -4,12 +4,8 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "task",
-    srcs = [
-        "task.cc",
-    ],
-    hdrs = [
-        "task.h",
-    ],
+    srcs = ["task.cc"],
+    hdrs = ["task.h"],
     copts = ["-DMODULE_NAME=\\\"planning\\\""],
     deps = [
         "//modules/common/status",
@@ -23,12 +19,8 @@ cc_library(
 
 cc_library(
     name = "task_factory",
-    srcs = [
-        "task_factory.cc",
-    ],
-    hdrs = [
-        "task_factory.h",
-    ],
+    srcs = ["task_factory.cc"],
+    hdrs = ["task_factory.h"],
     copts = [
         "-DMODULE_NAME=\\\"planning\\\"",
         "-fopenmp",
@@ -46,6 +38,7 @@ cc_library(
         "//modules/planning/tasks/deciders/path_decider",
         "//modules/planning/tasks/deciders/path_lane_borrow_decider",
         "//modules/planning/tasks/deciders/path_reuse_decider",
+        "//modules/planning/tasks/deciders/rss_decider",
         "//modules/planning/tasks/deciders/rule_based_stop_decider",
         "//modules/planning/tasks/deciders/speed_bounds_decider",
         "//modules/planning/tasks/deciders/speed_decider",
@@ -56,7 +49,6 @@ cc_library(
         "//modules/planning/tasks/optimizers/piecewise_jerk_path:piecewise_jerk_path_optimizer",
         "//modules/planning/tasks/optimizers/piecewise_jerk_speed:piecewise_jerk_speed_nonlinear_optimizer",
         "//modules/planning/tasks/optimizers/piecewise_jerk_speed:piecewise_jerk_speed_optimizer",
-        "//modules/planning/tasks/rss:decider_rss",
     ],
 )
 

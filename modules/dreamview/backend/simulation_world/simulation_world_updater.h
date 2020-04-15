@@ -20,16 +20,15 @@
 
 #pragma once
 
+#include <boost/thread/locks.hpp>
+#include <boost/thread/shared_mutex.hpp>
 #include <memory>
 #include <string>
 
-#include "boost/thread/locks.hpp"
-#include "boost/thread/shared_mutex.hpp"
-
+#include "absl/strings/str_cat.h"
 #include "cyber/common/log.h"
 #include "cyber/cyber.h"
 
-#include "absl/strings/str_cat.h"
 #include "modules/dreamview/backend/data_collection_monitor/data_collection_monitor.h"
 #include "modules/dreamview/backend/handlers/websocket_handler.h"
 #include "modules/dreamview/backend/map/map_service.h"
@@ -114,8 +113,6 @@ class SimulationWorldUpdater {
 
   void RegisterMessageHandlers();
 
-  std::unique_ptr<cyber::Timer> timer_;
-
   SimulationWorldService sim_world_service_;
   const MapService *map_service_ = nullptr;
   WebSocketHandler *websocket_ = nullptr;
@@ -139,6 +136,8 @@ class SimulationWorldUpdater {
   // Mutex to protect concurrent access to simulation_world_json_.
   // NOTE: Use boost until we have std version of rwlock support.
   boost::shared_mutex mutex_;
+
+  std::unique_ptr<cyber::Timer> timer_;
 };
 
 }  // namespace dreamview

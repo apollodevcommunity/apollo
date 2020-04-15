@@ -21,7 +21,6 @@
 #pragma once
 
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include "Eigen/Eigen"
@@ -51,7 +50,8 @@ class OpenSpaceTrajectoryOptimizer {
       const Eigen::MatrixXi& obstacles_edges_num,
       const Eigen::MatrixXd& obstacles_A, const Eigen::MatrixXd& obstacles_b,
       const std::vector<std::vector<common::math::Vec2d>>&
-          obstacles_vertices_vec);
+          obstacles_vertices_vec,
+      double* time_latency);
 
   void GetStitchingTrajectory(
       std::vector<common::TrajectoryPoint>* stitching_trajectory) {
@@ -66,7 +66,7 @@ class OpenSpaceTrajectoryOptimizer {
 
   void RecordDebugInfo(
       const common::TrajectoryPoint& trajectory_stitching_point,
-      const Vec2d& translate_origin, const double rotate_angle,
+      const common::math::Vec2d& translate_origin, const double rotate_angle,
       const std::vector<double>& end_pose, const Eigen::MatrixXd& xWS,
       const Eigen::MatrixXd& uWs, const Eigen::MatrixXd& l_warm_up,
       const Eigen::MatrixXd& n_warm_up, const Eigen::MatrixXd& dual_l_result_ds,
@@ -89,7 +89,7 @@ class OpenSpaceTrajectoryOptimizer {
   bool IsInitPointNearDestination(
       const common::TrajectoryPoint& planning_init_point,
       const std::vector<double>& end_pose, double rotate_angle,
-      const Vec2d& translate_origin);
+      const common::math::Vec2d& translate_origin);
 
   void PathPointNormalizing(double rotate_angle,
                             const common::math::Vec2d& translate_origin,

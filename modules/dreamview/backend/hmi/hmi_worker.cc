@@ -23,6 +23,7 @@
 #include "modules/common/adapters/adapter_gflags.h"
 #include "modules/common/configs/config_gflags.h"
 #include "modules/common/kv_db/kv_db.h"
+#include "modules/common/util/future.h"
 #include "modules/common/util/map_util.h"
 #include "modules/common/util/message_util.h"
 #include "modules/dreamview/backend/common/dreamview_gflags.h"
@@ -64,7 +65,7 @@ using WLock = boost::unique_lock<boost::shared_mutex>;
 constexpr char kNavigationModeName[] = "Navigation";
 
 // Convert a string to be title-like. E.g.: "hello_world" -> "Hello World".
-std::string TitleCase(const std::string& origin) {
+std::string TitleCase(std::string_view origin) {
   std::vector<std::string> parts = absl::StrSplit(origin, '_');
   for (auto& part : parts) {
     if (!part.empty()) {
@@ -89,8 +90,8 @@ Map<std::string, std::string> ListDirAsDict(const std::string& dir) {
 }
 
 // List files by pattern and return a dict of {file_title: file_path}.
-Map<std::string, std::string> ListFilesAsDict(const std::string& dir,
-                                              const std::string& extension) {
+Map<std::string, std::string> ListFilesAsDict(std::string_view dir,
+                                              std::string_view extension) {
   Map<std::string, std::string> result;
   const std::string pattern = absl::StrCat(dir, "/*", extension);
   for (const std::string& file_path : cyber::common::Glob(pattern)) {
@@ -104,7 +105,7 @@ Map<std::string, std::string> ListFilesAsDict(const std::string& dir,
 }
 
 template <class FlagType, class ValueType>
-void SetGlobalFlag(const std::string& flag_name, const ValueType& value,
+void SetGlobalFlag(std::string_view flag_name, const ValueType& value,
                    FlagType* flag) {
   static constexpr char kGlobalFlagfile[] =
       "/apollo/modules/common/data/global_flagfile.txt";
@@ -112,13 +113,13 @@ void SetGlobalFlag(const std::string& flag_name, const ValueType& value,
     *flag = value;
     // Overwrite global flagfile.
     std::ofstream fout(kGlobalFlagfile, std::ios_base::app);
-    CHECK(fout) << "Fail to open global flagfile " << kGlobalFlagfile;
+    ACHECK(fout) << "Fail to open global flagfile " << kGlobalFlagfile;
     fout << "\n--" << flag_name << "=" << value << std::endl;
   }
 }
 
-void System(const std::string& cmd) {
-  const int ret = std::system(cmd.c_str());
+void System(std::string_view cmd) {
+  const int ret = std::system(cmd.data());
   if (ret == 0) {
     AINFO << "SUCCESS: " << cmd;
   } else {
@@ -156,7 +157,7 @@ HMIConfig HMIWorker::LoadConfig() {
   // Get available modes, maps and vehicles by listing data directory.
   *config.mutable_modes() =
       ListFilesAsDict(FLAGS_hmi_modes_config_path, ".pb.txt");
-  CHECK(!config.modes().empty())
+  ACHECK(!config.modes().empty())
       << "No modes config loaded from " << FLAGS_hmi_modes_config_path;
 
   *config.mutable_maps() = ListDirAsDict(FLAGS_maps_data_path);
@@ -167,14 +168,14 @@ HMIConfig HMIWorker::LoadConfig() {
 
 HMIMode HMIWorker::LoadMode(const std::string& mode_config_path) {
   HMIMode mode;
-  CHECK(cyber::common::GetProtoFromFile(mode_config_path, &mode))
+  ACHECK(cyber::common::GetProtoFromFile(mode_config_path, &mode))
       << "Unable to parse HMIMode from file " << mode_config_path;
   // Translate cyber_modules to regular modules.
   for (const auto& iter : mode.cyber_modules()) {
     const std::string& module_name = iter.first;
     const CyberModule& cyber_module = iter.second;
     // Each cyber module should have at least one dag file.
-    CHECK(!cyber_module.dag_files().empty())
+    ACHECK(!cyber_module.dag_files().empty())
         << "None dag file is provided for " << module_name << " module in "
         << mode_config_path;
 
@@ -236,7 +237,8 @@ void HMIWorker::InitStatus() {
   //   2. CachedMode if it's stored in KV database.
   //   3. default_hmi_mode if it is available.
   //   4. Pick the first available mode.
-  const std::string cached_mode = KVDB::Get(FLAGS_current_mode_db_key);
+  const std::string cached_mode =
+      KVDB::Get(FLAGS_current_mode_db_key).value_or("");
   if (FLAGS_use_navigation_mode && ContainsKey(modes, kNavigationModeName)) {
     ChangeMode(kNavigationModeName);
   } else if (ContainsKey(modes, cached_mode)) {
@@ -462,7 +464,7 @@ void HMIWorker::ChangeVehicle(const std::string& vehicle_name) {
   }
   ResetMode();
 
-  CHECK(VehicleManager::Instance()->UseVehicle(*vehicle_dir));
+  ACHECK(VehicleManager::Instance()->UseVehicle(*vehicle_dir));
 }
 
 void HMIWorker::ChangeMode(const std::string& mode_name) {

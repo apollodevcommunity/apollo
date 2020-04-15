@@ -19,9 +19,7 @@ cc_library(
 cc_test(
     name = "free_move_predictor_test",
     size = "small",
-    srcs = [
-        "free_move_predictor_test.cc",
-    ],
+    srcs = ["free_move_predictor_test.cc"],
     data = [
         "//modules/prediction:prediction_data",
         "//modules/prediction:prediction_testdata",
@@ -29,7 +27,7 @@ cc_test(
     deps = [
         "//modules/prediction/common:kml_map_based_test",
         "//modules/prediction/predictor/free_move:free_move_predictor",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 

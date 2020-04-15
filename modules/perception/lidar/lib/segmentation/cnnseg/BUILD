@@ -5,12 +5,8 @@ package(default_visibility = ["//visibility:public"])
 
 cc_library(
     name = "cnn_segmentation",
-    srcs = [
-        "cnn_segmentation.cc",
-    ],
-    hdrs = [
-        "cnn_segmentation.h",
-    ],
+    srcs = ["cnn_segmentation.cc"],
+    hdrs = ["cnn_segmentation.h"],
     deps = [
         ":disjoint_set",
         ":feature_generator",
@@ -39,9 +35,7 @@ cc_library(
 
 cc_library(
     name = "disjoint_set",
-    hdrs = [
-        "disjoint_set.h",
-    ],
+    hdrs = ["disjoint_set.h"],
 )
 
 cc_library(
@@ -50,25 +44,20 @@ cc_library(
         "feature_generator.cc",
         ":feature_generator_cuda",
     ],
-    hdrs = [
-        "feature_generator.h",
-    ],
+    hdrs = ["feature_generator.h"],
     deps = [
         ":util",
         "//modules/perception/base",
         "//modules/perception/lidar/lib/segmentation/cnnseg/proto:cnnseg_param_proto",
+        "@com_google_googletest//:gtest",
         "@eigen",
     ],
 )
 
 cuda_library(
     name = "feature_generator_cuda",
-    srcs = [
-        "feature_generator.cu",
-    ],
-    hdrs = [
-        "feature_generator.h",
-    ],
+    srcs = ["feature_generator.cu"],
+    hdrs = ["feature_generator.h"],
     deps = [
         ":util",
         "//modules/perception/base",
@@ -80,35 +69,29 @@ cuda_library(
 
 cc_library(
     name = "util",
-    hdrs = [
-        "util.h",
-    ],
+    hdrs = ["util.h"],
 )
 
 cc_test(
     name = "cnn_segmentation_test",
     size = "small",
-    srcs = [
-        "cnn_segmentation_test.cc",
-    ],
+    srcs = ["cnn_segmentation_test.cc"],
     deps = [
         ":cnn_segmentation",
         "//modules/perception/common:perception_gflags",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
 #cc_test(
 #    name = "feature_generator_test",
 #    size = "small",
-#    srcs = [
-#        "feature_generator_test.cc",
-#    ],
+#    srcs = ["feature_generator_test.cc"],
 #    deps = [
 #        ":feature_generator",
 #        "//modules/perception/common:perception_gflags",
 #        "//modules/perception/lidar/common:pcl_util",
-#        "@gtest//:main",
+#        "@com_google_googletest//:gtest_main",
 #        "@opencv2//:core",
 #        "@opencv2//:highgui",
 #    ],

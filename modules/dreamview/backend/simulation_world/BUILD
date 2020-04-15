@@ -38,27 +38,21 @@ cc_library(
 cc_test(
     name = "simulation_world_service_test",
     size = "small",
-    srcs = [
-        "simulation_world_service_test.cc",
-    ],
+    srcs = ["simulation_world_service_test.cc"],
     data = [
         "//modules/dreamview/backend/testdata",
     ],
     deps = [
         ":simulation_world_service",
         "//modules/common/math:quaternion",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
     name = "simulation_world_updater",
-    srcs = [
-        "simulation_world_updater.cc",
-    ],
-    hdrs = [
-        "simulation_world_updater.h",
-    ],
+    srcs = ["simulation_world_updater.cc"],
+    hdrs = ["simulation_world_updater.h"],
     copts = ['-DMODULE_NAME=\\"dreamview\\"'],
     deps = [
         ":simulation_world_service",
@@ -69,7 +63,7 @@ cc_library(
         "//modules/dreamview/backend/map:map_service",
         "//modules/dreamview/backend/perception_camera_updater",
         "//modules/dreamview/backend/sim_control",
-        "@boost",
+        "//third_party:boost",
     ],
 )
 

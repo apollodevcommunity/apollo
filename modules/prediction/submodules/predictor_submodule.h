@@ -27,18 +27,19 @@
 #include "cyber/component/component.h"
 #include "modules/prediction/common/message_process.h"
 #include "modules/prediction/container/adc_trajectory/adc_trajectory_container.h"
-#include "modules/prediction/submodules/evaluator_output.h"
+#include "modules/prediction/submodules/submodule_output.h"
 
 namespace apollo {
 namespace prediction {
 
 class PredictorSubmodule
-    : public cyber::Component<EvaluatorOutput, ADCTrajectoryContainer> {
+    : public cyber::Component<apollo::perception::PerceptionObstacles,
+                              ADCTrajectoryContainer, SubmoduleOutput> {
  public:
   /**
    * @brief Destructor
    */
-  ~PredictorSubmodule();
+  ~PredictorSubmodule() = default;
 
   /**
    * @brief Get name of the node
@@ -54,11 +55,12 @@ class PredictorSubmodule
 
   /**
    * @brief Data callback upon receiving a prediction evaluator output.
-   * @param Prediction evaluator output.
    * @param Prediction adc trajectory container.
+   * @param Prediction evaluator output.
    */
-  bool Proc(const std::shared_ptr<EvaluatorOutput>&,
-            const std::shared_ptr<ADCTrajectoryContainer>&) override;
+  bool Proc(const std::shared_ptr<apollo::perception::PerceptionObstacles>&,
+            const std::shared_ptr<ADCTrajectoryContainer>&,
+            const std::shared_ptr<SubmoduleOutput>&) override;
 
  private:
   std::shared_ptr<cyber::Writer<PredictionObstacles>> predictor_writer_;

@@ -5,24 +5,18 @@ package(default_visibility = ["//visibility:public"])
 cc_test(
     name = "hm_matcher_test",
     size = "small",
-    srcs = [
-        "hm_matcher_test.cc",
-    ],
+    srcs = ["hm_matcher_test.cc"],
     deps = [
         ":hm_matcher",
         "//modules/perception/radar/lib/tracker/common:radar_track_manager",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
     name = "hm_matcher",
-    srcs = [
-        "hm_matcher.cc",
-    ],
-    hdrs = [
-        "hm_matcher.h",
-    ],
+    srcs = ["hm_matcher.cc"],
+    hdrs = ["hm_matcher.h"],
     deps = [
         "//cyber/common:file",
         "//modules/perception/base",

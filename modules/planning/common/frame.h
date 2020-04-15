@@ -22,7 +22,6 @@
 
 #include <list>
 #include <map>
-#include <memory>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -167,6 +166,10 @@ class Frame {
 
   const DrivingAction &GetPadMsgDrivingAction() const {
     return pad_msg_driving_action_;
+  }
+
+  std::list<ReferenceLineInfo>* mutable_reference_line_infos() {
+    return &reference_line_info_;
   }
 
  private:

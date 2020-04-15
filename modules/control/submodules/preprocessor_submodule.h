@@ -85,8 +85,6 @@ class PreprocessorSubmodule final : public cyber::Component<LocalView> {
 
   bool estop_ = false;
 
-  std::string estop_reason_;
-
   common::monitor::MonitorLogBuffer monitor_logger_buffer_;
 
   common::Header latest_replan_trajectory_header_;

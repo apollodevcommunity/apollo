@@ -23,72 +23,68 @@
 #include <string>
 
 #include "modules/common/adapters/adapter_gflags.h"
+#include "modules/common/latency_recorder/latency_recorder.h"
 #include "modules/control/common/control_gflags.h"
 
 namespace apollo {
 namespace control {
 
 using apollo::canbus::Chassis;
+using apollo::common::ErrorCode;
+using apollo::common::Status;
+using apollo::common::time::Clock;
 
 std::string PostprocessorSubmodule::Name() const {
   return FLAGS_postprocessor_submodule_name;
 }
 
 bool PostprocessorSubmodule::Init() {
-  if (!cyber::common::GetProtoFromFile(FLAGS_control_common_conf_file,
-                                       &control_common_conf_)) {
-    AERROR << "Unable to load control common conf file: "
-           << FLAGS_control_common_conf_file;
-    return false;
-  }
+  ACHECK(cyber::common::GetProtoFromFile(FLAGS_control_common_conf_file,
+                                         &control_common_conf_))
+      << "Unable to load control common conf file: "
+      << FLAGS_control_common_conf_file;
+
   postprocessor_writer_ =
       node_->CreateWriter<ControlCommand>(FLAGS_control_command_topic);
-  CHECK(postprocessor_writer_ != nullptr);
+  ACHECK(postprocessor_writer_ != nullptr);
   return true;
 }
 
 bool PostprocessorSubmodule::Proc(
-    const std::shared_ptr<Preprocessor>& preprocessor_status,
-    const std::shared_ptr<ControlCommand>& control_command) {
-  ControlCommand post_processor;
-  if (preprocessor_status->received_pad_msg()) {
-    post_processor.mutable_pad_msg()->CopyFrom(
-        preprocessor_status->mutable_local_view()->pad_msg());
-  }
+    const std::shared_ptr<ControlCommand>& control_core_command) {
+  const auto start_time = Clock::Now();
+  ControlCommand control_command;
+  // get all fields from control_core_command for now
+  control_command = *control_core_command;
 
-  // forward estop reason among following control frames.
-  if (preprocessor_status->estop()) {
+  // estop handling
+  if (control_core_command->header().status().error_code() != ErrorCode::OK) {
     AWARN_EVERY(100) << "Estop triggered! No control core method executed!";
-    post_processor.mutable_header()->mutable_status()->set_msg(
-        preprocessor_status->estop_reason());
-    post_processor.set_speed(0);
-    post_processor.set_throttle(0);
-    post_processor.set_brake(control_common_conf_.soft_estop_brake());
-    post_processor.set_gear_location(Chassis::GEAR_DRIVE);
-  } else {
-    // set control command
-    post_processor.set_brake(control_command->brake());
-    post_processor.set_throttle(control_command->throttle());
-    post_processor.set_steering_target(control_command->steering_target());
-    post_processor.set_steering_rate(control_command->steering_rate());
-    post_processor.set_gear_location(control_command->gear_location());
-    post_processor.set_acceleration(control_command->acceleration());
+    control_command.set_speed(0);
+    control_command.set_throttle(0);
+    control_command.set_brake(control_common_conf_.soft_estop_brake());
+    control_command.set_gear_location(Chassis::GEAR_DRIVE);
   }
 
   // set header
-  LocalView local_view = preprocessor_status->local_view();
-  post_processor.mutable_header()->set_lidar_timestamp(
-      local_view.mutable_trajectory()->header().lidar_timestamp());
-  post_processor.mutable_header()->set_camera_timestamp(
-      local_view.mutable_trajectory()->header().camera_timestamp());
-  post_processor.mutable_header()->set_radar_timestamp(
-      local_view.mutable_trajectory()->header().radar_timestamp());
+  control_command.mutable_header()->set_lidar_timestamp(
+      control_core_command->header().lidar_timestamp());
+  control_command.mutable_header()->set_camera_timestamp(
+      control_core_command->header().camera_timestamp());
+  control_command.mutable_header()->set_radar_timestamp(
+      control_core_command->header().radar_timestamp());
 
-  common::util::FillHeader(Name(), &post_processor);
+  common::util::FillHeader(Name(), &control_command);
+  const auto end_time = Clock::Now();
 
-  postprocessor_writer_->Write(post_processor);
+  // measure latency
+  static apollo::common::LatencyRecorder latency_recorder(
+      FLAGS_control_command_topic);
+  latency_recorder.AppendLatencyRecord(
+      control_command.header().lidar_timestamp(), start_time, end_time);
 
-  // TODO(SHU): add debug info; add latency time
+  postprocessor_writer_->Write(control_command);
+
   return true;
 }
 

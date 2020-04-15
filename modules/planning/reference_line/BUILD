@@ -28,11 +28,8 @@ cc_library(
 
 cc_library(
     name = "reference_line_smoother",
-    srcs = [
-    ],
-    hdrs = [
-        "reference_line_smoother.h",
-    ],
+    srcs = [],
+    hdrs = ["reference_line_smoother.h"],
     copts = ["-DMODULE_NAME=\\\"planning\\\""],
     deps = [
         "//modules/planning/proto:reference_line_smoother_config_proto",
@@ -41,12 +38,8 @@ cc_library(
 
 cc_library(
     name = "qp_spline_reference_line_smoother",
-    srcs = [
-        "qp_spline_reference_line_smoother.cc",
-    ],
-    hdrs = [
-        "qp_spline_reference_line_smoother.h",
-    ],
+    srcs = ["qp_spline_reference_line_smoother.cc"],
+    hdrs = ["qp_spline_reference_line_smoother.h"],
     copts = ["-DMODULE_NAME=\\\"planning\\\""],
     deps = [
         ":reference_line",
@@ -80,39 +73,34 @@ cc_library(
         "//modules/planning/math/curve1d:quintic_spiral_path",
         "//modules/planning/math/smoothing_spline:spline_2d_solver",
         "//modules/planning/proto:planning_proto",
+        "//third_party:ipopt",
         "@eigen",
-        "@ipopt",
     ],
 )
 
 cc_test(
     name = "spiral_reference_line_smoother_test",
     size = "small",
-    srcs = [
-        "spiral_reference_line_smoother_test.cc",
-    ],
+    srcs = ["spiral_reference_line_smoother_test.cc"],
     data = [
         "//modules/planning:planning_conf",
     ],
     deps = [
         ":spiral_reference_line_smoother",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
     name = "discrete_points_reference_line_smoother",
-    srcs = [
-        "discrete_points_reference_line_smoother.cc",
-    ],
-    hdrs = [
-        "discrete_points_reference_line_smoother.h",
-    ],
+    srcs = ["discrete_points_reference_line_smoother.cc"],
+    hdrs = ["discrete_points_reference_line_smoother.h"],
     copts = ["-DMODULE_NAME=\\\"planning\\\""],
     deps = [
         ":reference_line",
         ":reference_line_smoother",
         "//modules/common/math",
+        "//modules/common/time",
         "//modules/planning/common:planning_gflags",
         "//modules/planning/math:discrete_points_math",
         "//modules/planning/math/discretized_points_smoothing:cos_theta_smoother",
@@ -125,9 +113,7 @@ cc_library(
 cc_test(
     name = "qp_spline_reference_line_smoother_test",
     size = "small",
-    srcs = [
-        "qp_spline_reference_line_smoother_test.cc",
-    ],
+    srcs = ["qp_spline_reference_line_smoother_test.cc"],
     data = [
         "//modules/planning:planning_conf",
         "//modules/planning:planning_testdata",
@@ -135,16 +121,14 @@ cc_test(
     deps = [
         ":qp_spline_reference_line_smoother",
         "//modules/map/hdmap",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_test(
     name = "discrete_points_reference_line_smoother_test",
     size = "small",
-    srcs = [
-        "discrete_points_reference_line_smoother_test.cc",
-    ],
+    srcs = ["discrete_points_reference_line_smoother_test.cc"],
     data = [
         "//modules/planning:planning_conf",
         "//modules/planning:planning_testdata",
@@ -152,18 +136,14 @@ cc_test(
     deps = [
         ":discrete_points_reference_line_smoother",
         "//modules/map/hdmap",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
 cc_library(
     name = "reference_line_provider",
-    srcs = [
-        "reference_line_provider.cc",
-    ],
-    hdrs = [
-        "reference_line_provider.h",
-    ],
+    srcs = ["reference_line_provider.cc"],
+    hdrs = ["reference_line_provider.h"],
     copts = ["-DMODULE_NAME=\\\"planning\\\""],
     deps = [
         ":discrete_points_reference_line_smoother",
@@ -184,9 +164,7 @@ cc_library(
 
 cc_binary(
     name = "smoother_util",
-    srcs = [
-        "smoother_util.cc",
-    ],
+    srcs = ["smoother_util.cc"],
     deps = [
         ":discrete_points_reference_line_smoother",
         ":qp_spline_reference_line_smoother",
@@ -198,9 +176,7 @@ cc_binary(
 
 cc_binary(
     name = "spiral_smoother_util",
-    srcs = [
-        "spiral_smoother_util.cc",
-    ],
+    srcs = ["spiral_smoother_util.cc"],
     deps = [
         ":spiral_reference_line_smoother",
         "//modules/planning/proto:planning_config_proto",

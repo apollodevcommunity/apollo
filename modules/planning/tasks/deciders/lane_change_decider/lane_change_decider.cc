@@ -31,13 +31,17 @@ using apollo::common::Status;
 using apollo::common::time::Clock;
 
 LaneChangeDecider::LaneChangeDecider(const TaskConfig& config)
-    : Decider(config) {}
+    : Decider(config) {
+  ACHECK(config_.has_lane_change_decider_config());
+}
 
 // added a dummy parameter to enable this task in ExecuteTaskOnReferenceLine
 Status LaneChangeDecider::Process(
     Frame* frame, ReferenceLineInfo* const current_reference_line_info) {
   // Sanity checks.
   CHECK_NOTNULL(frame);
+
+  const auto& lane_change_decider_config = config_.lane_change_decider_config();
 
   std::list<ReferenceLineInfo>* reference_line_info =
       frame->mutable_reference_line_info();
@@ -47,7 +51,7 @@ Status LaneChangeDecider::Process(
     return Status(ErrorCode::PLANNING_ERROR, msg);
   }
 
-  if (FLAGS_reckless_change_lane) {
+  if (lane_change_decider_config.reckless_change_lane()) {
     PrioritizeChangeLane(true, reference_line_info);
     return Status::OK();
   }
@@ -106,7 +110,8 @@ Status LaneChangeDecider::Process(
     } else if (prev_status->status() == ChangeLaneStatus::CHANGE_LANE_FAILED) {
       // TODO(SHU): add an optimization_failure counter to enter
       // change_lane_failed status
-      if (now - prev_status->timestamp() < FLAGS_change_lane_fail_freeze_time) {
+      if (now - prev_status->timestamp() <
+          lane_change_decider_config.change_lane_fail_freeze_time()) {
         // RemoveChangeLane(reference_line_info);
         PrioritizeChangeLane(false, reference_line_info);
         ADEBUG << "freezed after failed";
@@ -118,7 +123,7 @@ Status LaneChangeDecider::Process(
     } else if (prev_status->status() ==
                ChangeLaneStatus::CHANGE_LANE_FINISHED) {
       if (now - prev_status->timestamp() <
-          FLAGS_change_lane_success_freeze_time) {
+          lane_change_decider_config.change_lane_success_freeze_time()) {
         // RemoveChangeLane(reference_line_info);
         PrioritizeChangeLane(false, reference_line_info);
         ADEBUG << "freezed after completed lane change";
@@ -167,8 +172,7 @@ void LaneChangeDecider::UpdatePreparationDistance(
     return;
   }
   common::SLPoint point_sl;
-  reference_line.XYToSL({lane_change_status->lane_change_start_position().x(),
-                         lane_change_status->lane_change_start_position().y()},
+  reference_line.XYToSL(lane_change_status->lane_change_start_position(),
                         &point_sl);
   ADEBUG << "Current ADC s: " << adc_sl_info.first[0];
   ADEBUG << "Change lane point s: " << point_sl.s();
@@ -204,8 +208,11 @@ void LaneChangeDecider::PrioritizeChangeLane(
     AERROR << "Reference line info empty";
     return;
   }
+
+  const auto& lane_change_decider_config = config_.lane_change_decider_config();
+
   // TODO(SHU): disable the reference line order change for now
-  if (!FLAGS_enable_prioritize_change_lane) {
+  if (!lane_change_decider_config.enable_prioritize_change_lane()) {
     return;
   }
   auto iter = reference_line_info->begin();
@@ -231,8 +238,9 @@ void LaneChangeDecider::PrioritizeChangeLane(
 // disabled for now
 void LaneChangeDecider::RemoveChangeLane(
     std::list<ReferenceLineInfo>* reference_line_info) const {
+  const auto& lane_change_decider_config = config_.lane_change_decider_config();
   // TODO(SHU): fix core dump when removing change lane
-  if (!FLAGS_enable_remove_change_lane) {
+  if (!lane_change_decider_config.enable_remove_change_lane()) {
     return;
   }
   ADEBUG << "removed change lane";
@@ -277,7 +285,7 @@ bool LaneChangeDecider::IsClearToChangeLane(
 
     for (const auto& p : obstacle->PerceptionPolygon().points()) {
       SLPoint sl_point;
-      reference_line_info->reference_line().XYToSL({p.x(), p.y()}, &sl_point);
+      reference_line_info->reference_line().XYToSL(p, &sl_point);
       start_s = std::fmin(start_s, sl_point.s());
       end_s = std::fmax(end_s, sl_point.s());
 
@@ -312,8 +320,8 @@ bool LaneChangeDecider::IsClearToChangeLane(
     // TODO(All) move to confs
     static constexpr double kSafeTimeOnSameDirection = 3.0;
     static constexpr double kSafeTimeOnOppositeDirection = 5.0;
-    static constexpr double kForwardMinSafeDistanceOnSameDirection = 3.0;
-    static constexpr double kBackwardMinSafeDistanceOnSameDirection = 4.0;
+    static constexpr double kForwardMinSafeDistanceOnSameDirection = 10.0;
+    static constexpr double kBackwardMinSafeDistanceOnSameDirection = 10.0;
     static constexpr double kForwardMinSafeDistanceOnOppositeDirection = 50.0;
     static constexpr double kBackwardMinSafeDistanceOnOppositeDirection = 1.0;
     static constexpr double kDistanceBuffer = 0.5;

@@ -29,13 +29,11 @@ cc_library(
 cc_test(
     name = "node_channel_impl_test",
     size = "small",
-    srcs = [
-        "node_channel_impl_test.cc",
-    ],
+    srcs = ["node_channel_impl_test.cc"],
     deps = [
         "//cyber",
         "//cyber/proto:unit_test_cc_proto",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -55,13 +53,11 @@ cc_library(
 cc_test(
     name = "node_test",
     size = "small",
-    srcs = [
-        "node_test.cc",
-    ],
+    srcs = ["node_test.cc"],
     deps = [
         "//cyber",
         "//cyber/proto:unit_test_cc_proto",
-        "@gtest//:main",
+        "@com_google_googletest//:gtest_main",
     ],
 )
 
@@ -98,7 +94,7 @@ cc_test(
     deps = [
         "//cyber",
         "//cyber/proto:unit_test_cc_proto",
-        "@gtest",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -131,7 +127,7 @@ cc_test(
     deps = [
         "//cyber",
         "//cyber/proto:unit_test_cc_proto",
-        "@gtest",
+        "@com_google_googletest//:gtest",
     ],
 )
 
@@ -143,7 +139,7 @@ cc_test(
         "//cyber",
         "//cyber/node:writer_base",
         "//cyber/proto:unit_test_cc_proto",
-        "@gtest",
+        "@com_google_googletest//:gtest",
     ],
 )
 

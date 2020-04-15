@@ -8,6 +8,7 @@ can_card_parameter {
   brand: SOCKET_CAN_RAW
   type: PCI_CARD
   channel_id: CHANNEL_ID_ZERO
+  interface: NATIVE
 }
 
 enable_debug_mode: true

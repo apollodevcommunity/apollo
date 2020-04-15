@@ -22,7 +22,7 @@ cc_library(
         "//modules/localization/proto:gps_proto",
         "//modules/localization/proto:localization_proto",
         "//modules/localization/proto:measure_proto",
-        "@boost",
+        "//third_party:boost",
         "@eigen",
         "@pcl",
     ],
@@ -30,14 +30,12 @@ cc_library(
 
 cc_binary(
     name = "cyber_record_parser",
-    srcs = [
-        "cyber_record_parser.cc",
-    ],
+    srcs = ["cyber_record_parser.cc"],
     linkstatic = 0,
     deps = [
         ":data_extraction",
         "//cyber",
-        "@boost",
+        "//third_party:boost",
         "@eigen",
         "@pcl",
     ],
@@ -45,13 +43,11 @@ cc_binary(
 
 cc_binary(
     name = "compare_poses",
-    srcs = [
-        "compare_poses.cc",
-    ],
+    srcs = ["compare_poses.cc"],
     deps = [
         ":data_extraction",
         "//cyber",
-        "@boost",
+        "//third_party:boost",
         "@eigen",
     ],
 )

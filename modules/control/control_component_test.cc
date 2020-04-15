@@ -33,6 +33,8 @@ namespace control {
 using apollo::canbus::Chassis;
 using apollo::common::monitor::MonitorMessage;
 using apollo::common::time::Clock;
+using apollo::cyber::Reader;
+using apollo::cyber::Writer;
 using apollo::localization::LocalizationEstimate;
 using apollo::planning::ADCTrajectory;
 
@@ -178,7 +180,7 @@ bool ControlComponentTest::FeedTestData() {
 }
 
 bool ControlComponentTest::RunControl(const std::string& test_case_name) {
-  CHECK(FeedTestData()) << "Failed to feed test data";
+  ACHECK(FeedTestData()) << "Failed to feed test data";
 
   control_component_.reset(new ControlComponent());
   control_component_->Initialize(component_config_);
