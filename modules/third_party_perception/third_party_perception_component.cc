@@ -35,10 +35,7 @@ bool ThirdPartyPerceptionComponent::Init() {
   ThirdPartyPerceptionDeviceType device_type =
         third_party_perception_param.device_type();
 
-  if (device_type == ThirdPartyPerceptionDeviceType::SMARTEREYE) {
-    perception_ = std::make_shared<ThirdPartyPerceptionSmartereye>(
-                  node_.get());
-  } else if (device_type == ThirdPartyPerceptionDeviceType::MOBILEYE) {
+  if (device_type == ThirdPartyPerceptionDeviceType::MOBILEYE) {
     perception_ = std::make_shared<ThirdPartyPerceptionMobileye>(node_.get());
   } else {
     perception_ = std::make_shared<ThirdPartyPerception>(node_.get());

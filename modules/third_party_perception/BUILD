@@ -13,7 +13,6 @@ cc_library(
         "//modules/third_party_perception/tools:third_party_perception_filter",
         "//modules/third_party_perception/tools:third_party_perception_fusion",
         "//modules/third_party_perception/tools:third_party_perception_radar_conversion",
-        "//modules/third_party_perception/tools:third_party_perception_smartereye_conversion",
         "//modules/third_party_perception/tools:third_party_perception_mobileye_conversion",               
     ],
 )
@@ -30,24 +29,6 @@ cc_library(
         "//modules/third_party_perception/tools:third_party_perception_filter",
         "//modules/third_party_perception/tools:third_party_perception_fusion",
         "//modules/third_party_perception/tools:third_party_perception_radar_conversion",
-        "//modules/third_party_perception/tools:third_party_perception_smartereye_conversion",
-        "//modules/third_party_perception/tools:third_party_perception_mobileye_conversion",
-    ],
-)
-
-cc_library(
-    name = "third_party_perception_smartereye_lib",
-    srcs = ["third_party_perception_smartereye.cc"],
-    hdrs = ["third_party_perception_smartereye.h"],
-    deps = [
-        ":third_party_perception_lib",
-        "//cyber",
-        "//modules/common/adapters:adapter_gflags",
-        "//modules/common/util:message_util",
-        "//modules/third_party_perception/tools:third_party_perception_filter",
-        "//modules/third_party_perception/tools:third_party_perception_fusion",
-        "//modules/third_party_perception/tools:third_party_perception_radar_conversion",
-        "//modules/third_party_perception/tools:third_party_perception_smartereye_conversion",
         "//modules/third_party_perception/tools:third_party_perception_mobileye_conversion",
     ],
 )
@@ -60,7 +41,6 @@ cc_library(
     deps = [
         ":third_party_perception_lib",
         ":third_party_perception_mobileye_lib",
-        ":third_party_perception_smartereye_lib",
     ],
 )
 

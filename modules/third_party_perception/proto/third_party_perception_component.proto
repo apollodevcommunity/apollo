@@ -3,8 +3,7 @@ syntax = "proto2";
 package apollo.third_party_perception;
 
 enum ThirdPartyPerceptionDeviceType {
-  SMARTEREYE = 0;
-  MOBILEYE = 1;
+  MOBILEYE = 0;
 };
 
 message ThirdPartyPerceptionDevice {  
