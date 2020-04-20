@@ -40,12 +40,14 @@ namespace apollo {
 namespace planning {
 
 DpRoadGraph::DpRoadGraph(const DpPolyPathConfig &config,
-                         const ReferenceLineInfo &reference_line_info,
-                         const SpeedData &speed_data)
+                         ReferenceLineInfo* reference_line_info,
+                         const SpeedData &speed_data
+                         )
     : config_(config),
       reference_line_info_(reference_line_info),
-      reference_line_(reference_line_info.reference_line()),
-      speed_data_(speed_data) {}
+      reference_line_(reference_line_info_->reference_line()),
+      speed_data_(speed_data)
+      {}
 
 bool DpRoadGraph::FindPathTunnel(const common::TrajectoryPoint &init_point,
                                  const std::vector<const Obstacle *> &obstacles,
@@ -53,23 +55,30 @@ bool DpRoadGraph::FindPathTunnel(const common::TrajectoryPoint &init_point,
   CHECK_NOTNULL(path_data);
 
   init_point_ = init_point;
+
   if (!reference_line_.XYToSL(init_point_.path_point(), &init_sl_point_)) {
     AERROR << "Fail to create init_sl_point from : "
            << init_point.DebugString();
     return false;
   }
+
   init_frenet_frame_point_ =
       reference_line_.GetFrenetPoint(init_point_.path_point());
 
-  waypoint_sampler_->Init(&reference_line_info_, init_sl_point_,
+  waypoint_sampler_->Init(reference_line_info_, init_sl_point_,
                           init_frenet_frame_point_);
   waypoint_sampler_->SetDebugLogger(planning_debug_);
 
   std::vector<DpRoadGraphNode> min_cost_path;
+
   if (!GenerateMinCostPath(obstacles, &min_cost_path)) {
     AERROR << "Fail to generate graph!";
     return false;
   }
+
+  //将最优前进线路封装成path_data
+  std::vector<PathData> candidate_path_data;
+
   std::vector<common::FrenetFramePoint> frenet_path;
   double accumulated_s = min_cost_path.front().sl_point.s();
   const double path_resolution = config_.path_resolution();
@@ -81,6 +90,7 @@ bool DpRoadGraph::FindPathTunnel(const common::TrajectoryPoint &init_point,
     const double path_length = cur_node.sl_point.s() - prev_node.sl_point.s();
     double current_s = 0.0;
     const auto &curve = cur_node.min_cost_curve;
+
     while (current_s + path_resolution / 2.0 < path_length) {
       const double l = curve.Evaluate(0, current_s);
       const double dl = curve.Evaluate(1, current_s);
@@ -98,9 +108,14 @@ bool DpRoadGraph::FindPathTunnel(const common::TrajectoryPoint &init_point,
     } else {
       accumulated_s += path_length;
     }
+    
   }
+  
   path_data->SetReferenceLine(&reference_line_);
   path_data->SetFrenetPath(FrenetFramePath(std::move(frenet_path)));
+  candidate_path_data.push_back(*path_data);
+
+  reference_line_info_->SetCandidatePathData(std::move(candidate_path_data));
   return true;
 }
 
@@ -110,19 +125,23 @@ bool DpRoadGraph::GenerateMinCostPath(
   CHECK(min_cost_path != nullptr);
 
   std::vector<std::vector<common::SLPoint>> path_waypoints;
+  //开始采样
+  // input init_point_
+  // output &path_waypoints
   if (!waypoint_sampler_->SamplePathWaypoints(init_point_, &path_waypoints) ||
       path_waypoints.size() < 1) {
     AERROR << "Fail to sample path waypoints! reference_line_length = "
            << reference_line_.Length();
     return false;
   }
+
   const auto &vehicle_config =
       common::VehicleConfigHelper::Instance()->GetConfig();
 
   TrajectoryCost trajectory_cost(
-      config_, reference_line_, reference_line_info_.IsChangeLanePath(),
+      config_, reference_line_, reference_line_info_->IsChangeLanePath(),
       obstacles, vehicle_config.vehicle_param(), speed_data_, init_sl_point_,
-      reference_line_info_.AdcSlBoundary());
+      reference_line_info_->AdcSlBoundary());
 
   std::list<std::list<DpRoadGraphNode>> graph_nodes;
 
@@ -135,6 +154,7 @@ bool DpRoadGraph::GenerateMinCostPath(
       nearest_i = i;
     }
   }
+
   graph_nodes.emplace_back();
   graph_nodes.back().emplace_back(first_row[nearest_i], nullptr,
                                   ComparableCost());
@@ -157,13 +177,15 @@ bool DpRoadGraph::GenerateMinCostPath(
           prev_dp_nodes, level, total_level, &trajectory_cost, &front,
           &(graph_nodes.back().back()));
 
-      if (FLAGS_enable_multi_thread_in_dp_poly_path) {
+      // if (FLAGS_enable_multi_thread_in_dp_poly_path)
+      if (true) {
         results.emplace_back(cyber::Async(&DpRoadGraph::UpdateNode, this, msg));
       } else {
         UpdateNode(msg);
       }
     }
-    if (FLAGS_enable_multi_thread_in_dp_poly_path) {
+    // if (FLAGS_enable_multi_thread_in_dp_poly_path)
+    if (true) {
       for (auto &result : results) {
         result.get();
       }
@@ -228,7 +250,7 @@ void DpRoadGraph::UpdateNode(const std::shared_ptr<RoadGraphMessage> &msg) {
   }
 
   // try to connect the current point with the first point directly
-  if (reference_line_info_.IsChangeLanePath() && msg->level >= 2) {
+  if (reference_line_info_->IsChangeLanePath() && msg->level >= 2) {
     const double init_dl = init_frenet_frame_point_.dl();
     const double init_ddl = init_frenet_frame_point_.ddl();
     QuinticPolynomialCurve1d curve(

@@ -81,15 +81,15 @@ TrajectoryCost::TrajectoryCost(const DpPolyPathConfig &config,
     } else if (ptr_obstacle->IsStatic() || is_bycycle_or_pedestrian) {
       static_obstacle_sl_boundaries_.push_back(std::move(sl_boundary));
     } else {
-      std::vector<Box2d> box_by_time;
+      std::vector<apollo::common::math::Box2d> box_by_time;
       for (uint32_t t = 0; t <= num_of_time_stamps_; ++t) {
-        TrajectoryPoint trajectory_point =
+        apollo::common::TrajectoryPoint trajectory_point =
             ptr_obstacle->GetPointAtTime(t * config.eval_time_interval());
 
-        Box2d obstacle_box = ptr_obstacle->GetBoundingBox(trajectory_point);
+        apollo::common::math::Box2d obstacle_box = ptr_obstacle->GetBoundingBox(trajectory_point);
         static constexpr double kBuff = 0.5;
-        Box2d expanded_obstacle_box =
-            Box2d(obstacle_box.center(), obstacle_box.heading(),
+        apollo::common::math::Box2d expanded_obstacle_box =
+            apollo::common::math::Box2d(obstacle_box.center(), obstacle_box.heading(),
                   obstacle_box.length() + kBuff, obstacle_box.width() + kBuff);
         box_by_time.push_back(expanded_obstacle_box);
       }
@@ -144,16 +144,16 @@ bool TrajectoryCost::IsOffRoad(const double ref_s, const double l,
   if (ref_s - init_sl_point_.s() < kIgnoreDistance) {
     return false;
   }
-  Vec2d rear_center(0.0, l);
+  apollo::common::math::Vec2d rear_center(0.0, l);
 
   const auto &param = common::VehicleConfigHelper::GetConfig().vehicle_param();
-  Vec2d vec_to_center(
+  apollo::common::math::Vec2d vec_to_center(
       (param.front_edge_to_center() - param.back_edge_to_center()) / 2.0,
       (param.left_edge_to_center() - param.right_edge_to_center()) / 2.0);
 
-  Vec2d rear_center_to_center = vec_to_center.rotate(std::atan(dl));
-  Vec2d center = rear_center + rear_center_to_center;
-  Vec2d front_center = center + rear_center_to_center;
+  apollo::common::math::Vec2d rear_center_to_center = vec_to_center.rotate(std::atan(dl));
+  apollo::common::math::Vec2d center = rear_center + rear_center_to_center;
+  apollo::common::math::Vec2d front_center = center + rear_center_to_center;
 
   const double buffer = 0.1;  // in meters
   const double r_w =
@@ -220,7 +220,7 @@ ComparableCost TrajectoryCost::CalculateDynamicObstacleCost(
     const double dl = curve.Evaluate(1, s);
 
     const common::SLPoint sl = common::util::PointFactory::ToSLPoint(ref_s, l);
-    const Box2d ego_box = GetBoxFromSLPoint(sl, dl);
+    const apollo::common::math::Box2d ego_box = GetBoxFromSLPoint(sl, dl);
     for (const auto &obstacle_trajectory : dynamic_obstacle_boxes_) {
       obstacle_cost +=
           GetCostBetweenObsBoxes(ego_box, obstacle_trajectory.at(index));
@@ -278,7 +278,7 @@ ComparableCost TrajectoryCost::GetCostFromObsSL(
   if (delta_l < kSafeDistance) {
     obstacle_cost.safety_cost +=
         config_.obstacle_collision_cost() *
-        Sigmoid(config_.obstacle_collision_distance() - delta_l);
+        apollo::common::math::Sigmoid(config_.obstacle_collision_distance() - delta_l);
   }
 
   return obstacle_cost;
@@ -286,7 +286,7 @@ ComparableCost TrajectoryCost::GetCostFromObsSL(
 
 // Simple version: calculate obstacle cost by distance
 ComparableCost TrajectoryCost::GetCostBetweenObsBoxes(
-    const Box2d &ego_box, const Box2d &obstacle_box) const {
+    const apollo::common::math::Box2d &ego_box, const apollo::common::math::Box2d &obstacle_box) const {
   ComparableCost obstacle_cost;
 
   const double distance = obstacle_box.DistanceTo(ego_box);
@@ -296,15 +296,15 @@ ComparableCost TrajectoryCost::GetCostBetweenObsBoxes(
 
   obstacle_cost.safety_cost +=
       config_.obstacle_collision_cost() *
-      Sigmoid(config_.obstacle_collision_distance() - distance);
+      apollo::common::math::Sigmoid(config_.obstacle_collision_distance() - distance);
   obstacle_cost.safety_cost +=
-      20.0 * Sigmoid(config_.obstacle_risk_distance() - distance);
+      20.0 * apollo::common::math::Sigmoid(config_.obstacle_risk_distance() - distance);
   return obstacle_cost;
 }
 
-Box2d TrajectoryCost::GetBoxFromSLPoint(const common::SLPoint &sl,
+apollo::common::math::Box2d TrajectoryCost::GetBoxFromSLPoint(const common::SLPoint &sl,
                                         const double dl) const {
-  Vec2d xy_point;
+  apollo::common::math::Vec2d xy_point;
   reference_line_->SLToXY(sl, &xy_point);
 
   ReferencePoint reference_point = reference_line_->GetReferencePoint(sl.s());
@@ -313,7 +313,7 @@ Box2d TrajectoryCost::GetBoxFromSLPoint(const common::SLPoint &sl,
   const double delta_theta = std::atan2(dl, one_minus_kappa_r_d);
   const double theta =
       common::math::NormalizeAngle(delta_theta + reference_point.heading());
-  return Box2d(xy_point, theta, vehicle_param_.length(),
+  return apollo::common::math::Box2d(xy_point, theta, vehicle_param_.length(),
                vehicle_param_.width());
 }
 

@@ -13,7 +13,8 @@ stage_config: {
   enabled: true
   task_type: PATH_LANE_BORROW_DECIDER
   task_type: PATH_BOUNDS_DECIDER
-  task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+  #task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+  task_type: DP_POLY_PATH_OPTIMIZER
   task_type: PATH_ASSESSMENT_DECIDER
   task_type: PATH_DECIDER
   task_type: RULE_BASED_STOP_DECIDER
@@ -30,7 +31,8 @@ stage_config: {
     task_type: PATH_BOUNDS_DECIDER
   }
   task_config: {
-    task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+    #task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+    task_type: DP_POLY_PATH_OPTIMIZER
   }
   task_config: {
     task_type: PATH_ASSESSMENT_DECIDER
@@ -70,7 +72,8 @@ stage_config: {
   task_type: CREEP_DECIDER
   task_type: PATH_LANE_BORROW_DECIDER
   task_type: PATH_BOUNDS_DECIDER
-  task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+  #task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+  task_type: DP_POLY_PATH_OPTIMIZER
   task_type: PATH_ASSESSMENT_DECIDER
   task_type: PATH_DECIDER
   task_type: RULE_BASED_STOP_DECIDER
@@ -98,7 +101,8 @@ stage_config: {
     task_type: PATH_BOUNDS_DECIDER
   }
   task_config: {
-    task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+    #task_type: PIECEWISE_JERK_PATH_OPTIMIZER
+    task_type: DP_POLY_PATH_OPTIMIZER
   }
   task_config: {
     task_type: PATH_ASSESSMENT_DECIDER

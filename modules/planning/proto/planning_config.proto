@@ -3,6 +3,7 @@ syntax = "proto2";
 package apollo.planning;
 
 import "modules/planning/proto/creep_decider_config.proto";
+import "modules/planning/proto/dp_poly_path_config.proto";
 import "modules/planning/proto/dp_st_speed_config.proto";
 import "modules/planning/proto/lane_change_decider_config.proto";
 import "modules/planning/proto/open_space_fallback_decider_config.proto";
@@ -31,6 +32,7 @@ import "modules/planning/proto/st_bounds_decider_config.proto";
 // tasks are shared among all scenarios and stages.
 message TaskConfig {
   enum TaskType {
+    DP_POLY_PATH_OPTIMIZER = 0;
     DP_ST_SPEED_OPTIMIZER = 1;
     PATH_DECIDER = 4;
     SPEED_DECIDER = 5;
@@ -59,6 +61,7 @@ message TaskConfig {
   };
   optional TaskType task_type = 1;
   oneof task_config {
+    DpPolyPathConfig dp_poly_path_config = 2;
     SpeedHeuristicConfig speed_heuristic_config = 3;
     PathDeciderConfig path_decider_config = 7;
     CreepDeciderConfig creep_decider_config = 10;

@@ -35,14 +35,17 @@
 #include "modules/planning/tasks/optimizers/road_graph/trajectory_cost.h"
 #include "modules/planning/tasks/optimizers/road_graph/waypoint_sampler.h"
 
+#include "modules/planning/tasks/optimizers/road_graph/dp_road_graph.h"
+
 namespace apollo {
 namespace planning {
 
 class DpRoadGraph {
  public:
   DpRoadGraph(const DpPolyPathConfig &config,
-              const ReferenceLineInfo &reference_line_info,
-              const SpeedData &speed_data);
+              ReferenceLineInfo* reference_line_info,
+              const SpeedData &speed_data
+              );
 
   ~DpRoadGraph() = default;
 
@@ -125,7 +128,7 @@ class DpRoadGraph {
  private:
   DpPolyPathConfig config_;
   common::TrajectoryPoint init_point_;
-  const ReferenceLineInfo &reference_line_info_;
+  ReferenceLineInfo* reference_line_info_ = nullptr;
   const ReferenceLine &reference_line_;
   SpeedData speed_data_;
   common::SLPoint init_sl_point_;
