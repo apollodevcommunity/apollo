@@ -15,6 +15,7 @@ proto_library(
         "control_conf.proto",
         "lat_controller_conf.proto",
         "lon_controller_conf.proto",
+        "new_controller_conf.proto",
         "pid_conf.proto",
     ],
     deps = [

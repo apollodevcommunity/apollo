@@ -90,6 +90,33 @@ cc_library(
 )
 
 cc_library(
+    name = "new_controller",
+    srcs = [
+        "new_controller.cc",
+    ],
+    hdrs = [
+        "new_controller.h",
+    ],
+    copts = ['-DMODULE_NAME=\\"control\\"'],
+    deps = [
+        ":controller_interface",
+        "//cyber",
+        "//modules/common/configs:vehicle_config_helper",
+        "//modules/common/filters:digital_filter",
+        "//modules/common/filters:digital_filter_coefficients",
+        "//modules/common/status",
+        "//modules/common/time",
+        "//modules/common/vehicle_state:vehicle_state_provider",
+        "//modules/control/common:control_gflags",
+        "//modules/control/common:interpolation_2d",
+        "//modules/control/common:leadlag_controller",
+        "//modules/control/common:pid_controller",
+        "//modules/control/common:trajectory_analyzer",
+        "//modules/localization/common:localization_common",
+    ],
+)
+
+cc_library(
     name = "controller",
     copts = ['-DMODULE_NAME=\\"control\\"'],
     deps = [
@@ -98,6 +125,7 @@ cc_library(
         ":lat_controller",
         ":lon_controller",
         ":mpc_controller",
+        ":new_controller",
         "@eigen",
     ],
 )
@@ -112,6 +140,7 @@ cc_library(
         ":lat_controller",
         ":lon_controller",
         ":mpc_controller",
+        ":new_controller",
         "//cyber",
         "//modules/canbus/proto:canbus_proto",
         "//modules/common/time",
