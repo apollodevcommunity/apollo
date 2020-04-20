@@ -25,7 +25,7 @@ config: {
   rule_id: DESTINATION
   enabled: true
   destination {
-    stop_distance: 0.5
+    stop_distance: 0.1
   }
 }
 
