@@ -16,3 +16,5 @@
 --use_sim_time=false
 
 --use_cyber_time=true
+--image_short_topic=/apollo/sensor/smartereye/image/compressed
+--map_dir=/apollo/modules/map/data/f2
